@@ -195,7 +195,7 @@ export async function linkToTx(
     apiKey?: string,
     apiKeyTestnet?: string
 ): Promise<{ tx: BaseTxInfo; testnet: boolean }> {
-    console.log("linkToTx", apiKey, apiKeyTestnet);
+    console.log('linkToTx', apiKey, apiKeyTestnet);
     // break given tx link to lt, hash, addr
 
     let lt: bigint, hash: Buffer, addr: Address;
@@ -359,11 +359,12 @@ export async function linkToTx(
                             forcedTestnet,
                             apiKeyTestnet
                         );
-                    }
-                    else
+                    } else
                         try {
                             // value may be set by forcedTestnet
-                            await waitForRateLimit(testnet ? apiKeyTestnet : apiKey);
+                            await waitForRateLimit(
+                                testnet ? apiKeyTestnet : apiKey
+                            );
                             res = await fetchTransactions(
                                 { hash: hashStr, limit: 1 },
                                 testnet,
@@ -374,7 +375,9 @@ export async function linkToTx(
                                 throw new Error('nope');
                             }
                         } catch {
-                            console.log(`Trying lt:hash testnet for ${hashStr}...`);
+                            console.log(
+                                `Trying lt:hash testnet for ${hashStr}...`
+                            );
                             testnet = true;
                             await waitForRateLimit(apiKeyTestnet);
                             res = await fetchTransactions(

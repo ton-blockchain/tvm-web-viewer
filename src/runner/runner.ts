@@ -14,10 +14,7 @@ import {
     Dictionary,
     OutAction,
 } from '@ton/core';
-import {
-    TonClient,
-    TonClient4,
-} from '@ton/ton';
+import { TonClient, TonClient4 } from '@ton/ton';
 import {
     AccountFromAPI,
     BaseTxInfo,
@@ -28,7 +25,13 @@ import {
     C5Error,
 } from './types';
 import { parseC5, parseStack } from './stack';
-import { getConfigAll, getLib, linkToTx, mcSeqnoByShard, txToLinks } from './utils';
+import {
+    getConfigAll,
+    getLib,
+    linkToTx,
+    mcSeqnoByShard,
+    txToLinks,
+} from './utils';
 
 function b64ToBigInt(b64: string): bigint {
     return BigInt('0x' + Buffer.from(b64, 'base64').toString('hex'));
@@ -140,7 +143,12 @@ export async function getEmulationWithStack(
     let txInfo: BaseTxInfo;
     let testnet = forcedTestnet || false;
     if (typeof txLink == 'string') {
-        let txGot = await linkToTx(txLink, forcedTestnet, apiKey, apiKeyTestnet);
+        let txGot = await linkToTx(
+            txLink,
+            forcedTestnet,
+            apiKey,
+            apiKeyTestnet
+        );
         txInfo = txGot.tx;
         testnet = txGot.testnet;
     } else {
@@ -152,8 +160,12 @@ export async function getEmulationWithStack(
 
     let { lt, hash, addr: address } = txInfo;
 
-    const endpointV4 = `https://${testnet ? 'sandbox' : 'mainnet'}-v4.tonhubapi.com`;
-    const endpointV2 = `https://${testnet ? 'testnet.' : ''}toncenter.com/api/v2/jsonRPC`;
+    const endpointV4 = `https://${
+        testnet ? 'sandbox' : 'mainnet'
+    }-v4.tonhubapi.com`;
+    const endpointV2 = `https://${
+        testnet ? 'testnet.' : ''
+    }toncenter.com/api/v2/jsonRPC`;
 
     const clientV4 = new TonClient4({
         endpoint: endpointV4,
@@ -163,10 +175,10 @@ export async function getEmulationWithStack(
             return config;
         },
     });
-    const clientV2 = new TonClient({ 
-        endpoint: endpointV2, 
+    const clientV2 = new TonClient({
+        endpoint: endpointV2,
         timeout: 10000,
-        apiKey: apiKey
+        apiKey: apiKey,
     });
 
     // 1. get tx alone to get the mc block seqno
@@ -174,7 +186,11 @@ export async function getEmulationWithStack(
     const tx = (await clientV4.getAccountTransactions(address, lt, hash))[0];
     console.log(tx.tx.now, 'tx time');
     await waitForRateLimit(apiKey);
-    const { mcSeqno, randSeed } = await mcSeqnoByShard(tx.block, testnet, apiKey);
+    const { mcSeqno, randSeed } = await mcSeqnoByShard(
+        tx.block,
+        testnet,
+        apiKey
+    );
     await waitForRateLimit(apiKey);
     const fullBlock = await clientV4.getBlock(mcSeqno);
     const mcBlockSeqno = fullBlock.shards[0].seqno;
@@ -332,11 +348,12 @@ export async function getEmulationWithStack(
             let parsedShardAccount = loadShardAccount(
                 Cell.fromBase64(shardAccountStr).asSlice()
             );
-            console.log("parsedShardAccount", parsedShardAccount)
+            console.log('parsedShardAccount', parsedShardAccount);
 
             const newBalance =
                 parsedShardAccount.account?.storage.balance.coins;
-            const newBalanceEC = parsedShardAccount.account?.storage.balance.other;
+            const newBalanceEC =
+                parsedShardAccount.account?.storage.balance.other;
             console.log(`lt: ${_tx.lt} balance: ${newBalance}`);
 
             prevBalance = newBalance || 0n;
@@ -430,7 +447,9 @@ export async function getEmulationWithStack(
                     // bad behavior
                     console.error('No instruction for stack:', stack);
                     console.error(
-                        `last instruction: #${TVMResult.length - 1}. ${instruction}`
+                        `last instruction: #${
+                            TVMResult.length - 1
+                        }. ${instruction}`
                     );
                     TVMResult.push({
                         // push stack without instruction

@@ -161,7 +161,12 @@ function App() {
         setProcessing(true);
         setEmulationStatus('Recognizing tx');
         try {
-            const { tx, testnet: gotTestnet } = await linkToTx(link, testnet, apiKeys.mainnet, apiKeys.testnet);
+            const { tx, testnet: gotTestnet } = await linkToTx(
+                link,
+                testnet,
+                apiKeys.mainnet,
+                apiKeys.testnet
+            );
             setTestnet(gotTestnet);
             const emulation = await getEmulationWithStack(
                 tx,
@@ -323,7 +328,7 @@ function App() {
                 if (params.length >= 1) {
                     const valueStr = params[0];
                     const value = parseInt(valueStr);
-                    
+
                     if (!isNaN(value)) {
                         if (value >= -5 && value <= 10) {
                             // PUSHINT_4 for small values (-5 <= x <= 10)
@@ -575,7 +580,10 @@ function App() {
                     />
                 </Link>
             </Flex>
-            <ToncenterKeysModal isOpen={isToncenterKeysOpen} onClose={() => setIsToncenterKeysOpen(false)} />
+            <ToncenterKeysModal
+                isOpen={isToncenterKeysOpen}
+                onClose={() => setIsToncenterKeysOpen(false)}
+            />
             <Center>
                 <Box width="80%" alignContent="center" mt="4rem">
                     <Heading mb="0.5rem">TVM Retracer</Heading>
