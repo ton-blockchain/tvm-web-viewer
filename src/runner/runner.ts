@@ -123,23 +123,31 @@ async function getOtherTxs(
     return txsInBlock;
 }
 
-export async function waitForRateLimit() {
+export async function waitForRateLimit(apiKey?: string) {
+    if (apiKey) {
+        return Promise.resolve();
+    }
     return new Promise((resolve) => setTimeout(resolve, 1000));
 }
 
 export async function getEmulationWithStack(
     txLink: string | BaseTxInfo,
     forcedTestnet: boolean = false,
-    sendStatus: (status: string) => void = () => {}
+    sendStatus: (status: string) => void = () => {},
+    apiKey?: string,
+    apiKeyTestnet?: string
 ): Promise<EmulateWithStackResult> {
     let txInfo: BaseTxInfo;
     let testnet = forcedTestnet || false;
     if (typeof txLink == 'string') {
-        let txGot = await linkToTx(txLink, forcedTestnet);
+        let txGot = await linkToTx(txLink, forcedTestnet, apiKey, apiKeyTestnet);
         txInfo = txGot.tx;
         testnet = txGot.testnet;
     } else {
         txInfo = txLink;
+    }
+    if (testnet) {
+        apiKey = apiKeyTestnet;
     }
 
     let { lt, hash, addr: address } = txInfo;
@@ -155,15 +163,19 @@ export async function getEmulationWithStack(
             return config;
         },
     });
-    const clientV2 = new TonClient({ endpoint: endpointV2, timeout: 10000 });
+    const clientV2 = new TonClient({ 
+        endpoint: endpointV2, 
+        timeout: 10000,
+        apiKey: apiKey
+    });
 
     // 1. get tx alone to get the mc block seqno
     sendStatus('Getting the tx');
     const tx = (await clientV4.getAccountTransactions(address, lt, hash))[0];
     console.log(tx.tx.now, 'tx time');
-    await waitForRateLimit();
-    const { mcSeqno, randSeed } = await mcSeqnoByShard(tx.block, testnet);
-    await waitForRateLimit();
+    await waitForRateLimit(apiKey);
+    const { mcSeqno, randSeed } = await mcSeqnoByShard(tx.block, testnet, apiKey);
+    await waitForRateLimit(apiKey);
     const fullBlock = await clientV4.getBlock(mcSeqno);
     const mcBlockSeqno = fullBlock.shards[0].seqno;
 
@@ -200,8 +212,8 @@ export async function getEmulationWithStack(
 
     // 3.1 get blockchain config
     sendStatus('Getting blockchain config');
-    await waitForRateLimit();
-    const configBase64 = await getConfigAll(testnet, mcBlockSeqno);
+    await waitForRateLimit(apiKey);
+    const configBase64 = await getConfigAll(testnet, mcBlockSeqno, apiKey);
 
     // 4. get prev. state from prev. block
     sendStatus('Getting account state');

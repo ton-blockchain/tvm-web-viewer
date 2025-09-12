@@ -70,6 +70,9 @@ import { TonIcon } from './icons/ton';
 import theme from './theme';
 import { DocsIcon } from './icons/docs';
 import { instruction, root_schema } from './instructions/schema';
+import { ApiKeyProvider, useApiKeys } from './contexts/ApiKeyContext';
+import { ToncenterKeysModal } from './components/ToncenterKeys';
+import { TonCenterIcon } from './icons/toncenter';
 
 type KeyPressHandler = () => void;
 const OPCODES_JSON_URL =
@@ -111,6 +114,8 @@ function App() {
     const [testnet, setTestnet] = useState<boolean>(
         getQueryParam('testnet') === 'true'
     );
+    const [isToncenterKeysOpen, setIsToncenterKeysOpen] = useState(false);
+    const { apiKeys } = useApiKeys();
 
     const [link, setLink] = useState<string>(txFromArg);
     const [isErrorOpen, setIsErrorOpen] = useState(false);
@@ -156,12 +161,14 @@ function App() {
         setProcessing(true);
         setEmulationStatus('Recognizing tx');
         try {
-            const { tx, testnet: gotTestnet } = await linkToTx(link, testnet);
+            const { tx, testnet: gotTestnet } = await linkToTx(link, testnet, apiKeys.mainnet, apiKeys.testnet);
             setTestnet(gotTestnet);
             const emulation = await getEmulationWithStack(
                 tx,
                 gotTestnet,
-                setEmulationStatus
+                setEmulationStatus,
+                apiKeys.mainnet,
+                apiKeys.testnet
             );
             setEmulationResult(emulation);
             updateURLWithTx(tx.hash.toString('hex') || '');
@@ -552,7 +559,23 @@ function App() {
                         _hover={{ color: 'gray.800' }}
                     />
                 </Link>
+                <Link
+                    ml="0.4rem"
+                    isExternal
+                    aria-label="Toncenter Keys Settings"
+                    onClick={() => setIsToncenterKeysOpen(true)}
+                >
+                    <Icon
+                        as={TonCenterIcon}
+                        display="block"
+                        transition="color 0.2s"
+                        color="gray.500"
+                        fontSize="1.5rem"
+                        _hover={{ color: 'gray.800' }}
+                    />
+                </Link>
             </Flex>
+            <ToncenterKeysModal isOpen={isToncenterKeysOpen} onClose={() => setIsToncenterKeysOpen(false)} />
             <Center>
                 <Box width="80%" alignContent="center" mt="4rem">
                     <Heading mb="0.5rem">TVM Retracer</Heading>
@@ -2592,4 +2615,10 @@ function TxLink({ explorer, link }: { explorer: string; link: string }) {
     );
 }
 
-export default App;
+export default function AppWithProviders() {
+    return (
+        <ApiKeyProvider>
+            <App />
+        </ApiKeyProvider>
+    );
+}
