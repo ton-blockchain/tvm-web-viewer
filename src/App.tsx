@@ -672,10 +672,6 @@ function App() {
                                         explorer="txtracer.ton.org"
                                     />
                                     <TxLink
-                                        link={emulationResult.links.toncx}
-                                        explorer="ton.cx"
-                                    />
-                                    <TxLink
                                         link={emulationResult.links.tonviewer}
                                         explorer="tonviewer.com"
                                     />

@@ -384,9 +384,6 @@ export function txToLinks(opts: BaseTxInfo, testnet: boolean): TxLinks {
     const txtracer = `https://txtracer.ton.org/?tx=${opts.hash.toString('hex')}`;
     return {
         txtracer: txtracer,
-        toncx: `https://${testnet ? 'testnet.' : ''}ton.cx/tx/${
-            opts.lt
-        }:${opts.hash.toString('base64')}:${opts.addr.toString()}`,
         tonviewer: `https://${
             testnet ? 'testnet.' : ''
         }tonviewer.com/transaction/${opts.hash.toString('hex')}`,
