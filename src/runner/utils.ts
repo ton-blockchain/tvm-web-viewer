@@ -382,6 +382,7 @@ export async function linkToTx(
 
 export function txToLinks(opts: BaseTxInfo, testnet: boolean): TxLinks {
     const txtracer = `https://txtracer.ton.org/?tx=${opts.hash.toString('hex')}`;
+    const tonscan = `https://${testnet ? 'testnet.' : ''}tonscan.org/tx/${opts.hash.toString('hex')}`;
     return {
         txtracer: txtracer,
         toncx: `https://${testnet ? 'testnet.' : ''}ton.cx/tx/${
@@ -390,9 +391,7 @@ export function txToLinks(opts: BaseTxInfo, testnet: boolean): TxLinks {
         tonviewer: `https://${
             testnet ? 'testnet.' : ''
         }tonviewer.com/transaction/${opts.hash.toString('hex')}`,
-        tonscan: `https://${
-            testnet ? 'testnet.' : ''
-        }tonscan.org/tx/${opts.hash.toString('base64')}`,
+        tonscan: tonscan,
         toncoin: `https://${
             testnet ? 'test-' : ''
         }explorer.toncoin.org/transaction?account=${opts.addr.toString()}&lt=${
