@@ -51,7 +51,6 @@ import {
 } from '@chakra-ui/icons';
 import { common, createStarryNight } from '@wooorm/starry-night';
 import { toHtml } from 'hast-util-to-html';
-import { fromHtml } from 'hast-util-from-html';
 import {
     Address,
     beginCell,
@@ -64,7 +63,7 @@ import {
 } from '@ton/core';
 import { getEmulationWithStack } from './runner/runner';
 import { EmulateWithStackResult, StackElement } from './runner/types';
-import { customStringify, linkToTx } from './runner/utils';
+import { linkToTx } from './runner/utils';
 import { GithubIcon } from './icons/github';
 import { TonIcon } from './icons/ton';
 import theme from './theme';
@@ -101,7 +100,7 @@ const useGlobalKeyPress = (key: string, action: KeyPressHandler) => {
     }, [key, action]);
 };
 
-export const getQueryParam = (param: string) => {
+const getQueryParam = (param: string) => {
     const queryParams = new URLSearchParams(window.location.search);
     return queryParams.get(param);
 };
@@ -139,20 +138,25 @@ function App() {
     const [loadingFiles, setLoadingFiles] = useState<Set<string>>(new Set());
     const [starryNight, setStarryNight] = useState<any>(null);
 
-    const updateURLWithTx = (tx: string) => {
+    const updateURLWithTx = (tx: string, isTestnet: boolean) => {
         const encodedTx = encodeURIComponent(tx);
         const url = new URL(window.location.href);
-        if (testnet) {
-            url.searchParams.set('testnet', testnet.toString());
+        if (isTestnet) {
+            url.searchParams.set('testnet', 'true');
+        } else {
+            url.searchParams.delete('testnet');
         }
         url.searchParams.set('tx', encodedTx);
         window.history.pushState({}, '', url.toString());
     };
 
     async function viewTransaction() {
+        if (processing) return;
         console.log('Viewing transaction:', link);
         setErrorText('');
         setEmulationResult(undefined);
+        setSelectedStep(0);
+        setIsHoveringStack(false);
         setProcessing(true);
         setEmulationStatus('Recognizing tx');
         try {
@@ -164,7 +168,7 @@ function App() {
                 setEmulationStatus
             );
             setEmulationResult(emulation);
-            updateURLWithTx(tx.hash.toString('hex') || '');
+            updateURLWithTx(tx.hash.toString('hex') || '', gotTestnet);
         } catch (e) {
             if (e instanceof Error) {
                 setErrorText(e.message);
@@ -224,8 +228,8 @@ function App() {
     };
     useGlobalKeyPress('ArrowRight', nextStep);
 
-    const loadOpcodesJson = useCallback(async () => {
-        if (opcodes.length > 0) return;
+    const loadOpcodesJson = useCallback(async (): Promise<instruction[]> => {
+        if (opcodes.length > 0) return opcodes;
 
         try {
             console.log('Loading opcodes json...');
@@ -235,30 +239,41 @@ function App() {
             }
             const data: root_schema = await response.json();
             setOpcodes(data.instructions);
+            return data.instructions;
         } catch (error) {
             console.error('Error loading opcodes:', error);
+            return [];
         }
     }, [opcodes]);
 
     useEffect(() => {
-        // load opcodes on first render
-        loadOpcodesJson();
-        // initialize starry night
-        initStarryNight();
-    }, []);
+        if (!emulationResult || emulationResult.computeLogs.length === 0) {
+            setSelectedStep(0);
+            return;
+        }
+        if (selectedStep >= emulationResult.computeLogs.length) {
+            setSelectedStep(0);
+        }
+    }, [emulationResult, selectedStep]);
 
-    const initStarryNight = async () => {
+    const initStarryNight = useCallback(async () => {
+        if (starryNight) {
+            return;
+        }
         try {
             const starryNightInstance = await createStarryNight(common);
             setStarryNight(starryNightInstance);
         } catch (error) {
             console.error('Failed to initialize starry night:', error);
         }
-    };
+    }, [starryNight]);
 
     const findOpcodeInfo = useCallback(
-        (opcodeStr: string): instruction | null => {
-            if (!opcodeStr || opcodes.length === 0) return null;
+        (
+            opcodeStr: string,
+            opcodePool: instruction[] = opcodes
+        ): instruction | null => {
+            if (!opcodeStr || opcodePool.length === 0) return null;
 
             let normalizedStr = opcodeStr.trim();
             if (normalizedStr.startsWith('implicit ')) {
@@ -269,7 +284,7 @@ function App() {
             const parts = normalizedStr.split(/\s+|,/);
             const commandName = parts[0].toUpperCase();
 
-            const exactMatch = opcodes.find(
+            const exactMatch = opcodePool.find(
                 (op) => op.mnemonic.toUpperCase() === commandName
             );
             if (exactMatch) return exactMatch;
@@ -284,7 +299,7 @@ function App() {
                         if (i === 0) {
                             // XCHG_0I (s0,si)
                             return (
-                                opcodes.find(
+                                opcodePool.find(
                                     (op) => op.mnemonic === 'XCHG_0I'
                                 ) || null
                             );
@@ -292,7 +307,7 @@ function App() {
                             // XCHG_1I (s1,si where i >= 2)
                             if (j >= 2) {
                                 return (
-                                    opcodes.find(
+                                    opcodePool.find(
                                         (op) => op.mnemonic === 'XCHG_1I'
                                     ) || null
                                 );
@@ -301,7 +316,7 @@ function App() {
                             // XCHG_IJ (si,sj where 1 <= i < j <= 15)
                             if (i >= 1 && j > i && j <= 15) {
                                 return (
-                                    opcodes.find(
+                                    opcodePool.find(
                                         (op) => op.mnemonic === 'XCHG_IJ'
                                     ) || null
                                 );
@@ -321,28 +336,28 @@ function App() {
                         if (value >= -5 && value <= 10) {
                             // PUSHINT_4 for small values (-5 <= x <= 10)
                             return (
-                                opcodes.find(
+                                opcodePool.find(
                                     (op) => op.mnemonic === 'PUSHINT_4'
                                 ) || null
                             );
                         } else if (value >= -128 && value <= 127) {
                             // PUSHINT_8 for 8-bit values (-128 <= xx <= 127)
                             return (
-                                opcodes.find(
+                                opcodePool.find(
                                     (op) => op.mnemonic === 'PUSHINT_8'
                                 ) || null
                             );
                         } else if (value >= -32768 && value <= 32767) {
                             // PUSHINT_16 for 16-bit values (-2^15 <= xx < 2^15)
                             return (
-                                opcodes.find(
+                                opcodePool.find(
                                     (op) => op.mnemonic === 'PUSHINT_16'
                                 ) || null
                             );
                         } else {
                             // PUSHINT_LONG for large values
                             return (
-                                opcodes.find(
+                                opcodePool.find(
                                     (op) => op.mnemonic === 'PUSHINT_LONG'
                                 ) || null
                             );
@@ -351,7 +366,7 @@ function App() {
                 }
             }
 
-            for (const op of opcodes) {
+            for (const op of opcodePool) {
                 if (op.doc.fift.includes('[') && op.doc.fift.includes(']')) {
                     const fiftParts = op.doc.fift.split(/\s+/);
                     const fiftCommand = fiftParts[0].toUpperCase();
@@ -367,7 +382,7 @@ function App() {
                 }
             }
 
-            const matchingByDescription = opcodes.filter((op) =>
+            const matchingByDescription = opcodePool.filter((op) =>
                 op.doc.description.toUpperCase().includes(commandName)
             );
 
@@ -375,7 +390,7 @@ function App() {
                 return matchingByDescription[0];
             }
 
-            const partialMatches = opcodes.filter(
+            const partialMatches = opcodePool.filter(
                 (op) => op.mnemonic.toUpperCase().includes(commandName)
                 // ||
                 // (op.aliases &&
@@ -426,14 +441,17 @@ function App() {
     );
 
     const handleOpcodeClick = useCallback(
-        (hexCode: string) => {
-            if (opcodes.length === 0) {
-                loadOpcodesJson();
-                return;
+        async (hexCode: string) => {
+            let currentOpcodes = opcodes;
+            if (currentOpcodes.length === 0) {
+                currentOpcodes = await loadOpcodesJson();
+                if (currentOpcodes.length === 0) {
+                    return;
+                }
             }
 
-            const opcodeInfo = findOpcodeInfo(hexCode);
-            const allMatches = findRelatedOpcodes(hexCode, opcodes);
+            const opcodeInfo = findOpcodeInfo(hexCode, currentOpcodes);
+            const allMatches = findRelatedOpcodes(hexCode, currentOpcodes);
             setMatchingOpcodes(allMatches);
             setSelectedOpcode(opcodeInfo);
             setSelectedOpcodeStackDiff(
@@ -563,7 +581,8 @@ function App() {
                             size="md"
                             value={link}
                             onChange={(e) => setLink(e.target.value)}
-                            type="url"
+                            type="text"
+                            isDisabled={processing}
                             onKeyUp={(e) => {
                                 if (e.key === 'Enter') {
                                     viewTransaction();
@@ -579,6 +598,7 @@ function App() {
                                 rounded="0"
                                 colorScheme="blue"
                                 onClick={viewTransaction}
+                                isDisabled={processing}
                             >
                                 Emulate
                             </Button>
@@ -828,7 +848,8 @@ function App() {
                                             </Box>
                                             <Spacer />
 
-                                            {emulationResult.computeLogs && (
+                                            {emulationResult.computeLogs
+                                                .length > 0 && (
                                                 <Box position="relative">
                                                     <Box
                                                         position="sticky"
@@ -1169,15 +1190,11 @@ function App() {
                                                             </code>
                                                             <br />
                                                             <br />
-                                                            <div
-                                                                dangerouslySetInnerHTML={{
-                                                                    __html: parseMarkdown(
-                                                                        selectedOpcode
-                                                                            .doc
-                                                                            .description
-                                                                    ),
-                                                                }}
-                                                            />
+                                                            {renderMarkdown(
+                                                                selectedOpcode
+                                                                    .doc
+                                                                    .description
+                                                            )}
                                                         </Text>
                                                         {matchingOpcodes.length >
                                                             1 && (
@@ -1247,6 +1264,9 @@ function App() {
                                                         }
                                                         starryNight={
                                                             starryNight
+                                                        }
+                                                        initStarryNight={
+                                                            initStarryNight
                                                         }
                                                     />
                                                 </Flex>
@@ -1488,6 +1508,7 @@ interface ImplementationViewProps {
     loadFileContent: (url: string) => Promise<string>;
     fileCache: Map<string, string>;
     loadingFiles: Set<string>;
+    initStarryNight: () => Promise<void>;
 }
 
 // helper functions for pretty GitHub links
@@ -1521,6 +1542,7 @@ const ImplementationView: React.FC<
     fileCache,
     loadingFiles,
     starryNight,
+    initStarryNight,
 }) => {
     const [selectedImpl, setSelectedImpl] = useState<number>(0);
     const [fileContent, setFileContent] = useState<string>('');
@@ -1546,6 +1568,12 @@ const ImplementationView: React.FC<
             }
         }
     }, [implementation, selectedImpl, loadFileContent, isExpanded]);
+
+    useEffect(() => {
+        if (isExpanded && !starryNight) {
+            initStarryNight();
+        }
+    }, [isExpanded, starryNight, initStarryNight]);
 
     // Auto-scroll to target line when file loads
     useEffect(() => {
@@ -2152,36 +2180,39 @@ const ImplementationView: React.FC<
     );
 };
 
-const highlightCodeAroundLine = (
-    content: string,
-    targetLine: number
-): string => {
-    if (!content) return 'loading...';
+const markdownTokenRegex = /(`[^`]+`|\*\*[^*]+\*\*|_[^_]+_|\*[^*]+\*)/g;
 
-    const lines = content.split('\n');
-    const contextLines = 15; // show 15 lines before and after
-    const startLine = Math.max(0, targetLine - contextLines - 1);
-    const endLine = Math.min(lines.length, targetLine + contextLines);
-
-    const relevantLines = lines.slice(startLine, endLine);
-
-    return relevantLines
-        .map((line, idx) => {
-            const lineNumber = startLine + idx + 1;
-            const isTarget = lineNumber === targetLine;
-            const prefix = isTarget ? '>>> ' : '    ';
-            return `${lineNumber.toString().padStart(4, ' ')}:${prefix}${line}`;
-        })
-        .join('\n');
+const renderMarkdownInline = (line: string): React.ReactNode[] => {
+    return line
+        .split(markdownTokenRegex)
+        .filter((part) => part.length > 0)
+        .map((part, index) => {
+            if (part.startsWith('`') && part.endsWith('`')) {
+                return <code key={index}>{part.slice(1, -1)}</code>;
+            }
+            if (part.startsWith('**') && part.endsWith('**')) {
+                return <strong key={index}>{part.slice(2, -2)}</strong>;
+            }
+            if (part.startsWith('_') && part.endsWith('_')) {
+                return <em key={index}>{part.slice(1, -1)}</em>;
+            }
+            if (part.startsWith('*') && part.endsWith('*')) {
+                return <em key={index}>{part.slice(1, -1)}</em>;
+            }
+            return <React.Fragment key={index}>{part}</React.Fragment>;
+        });
 };
 
-const parseMarkdown = (text: string): string => {
-    if (!text) return '';
-    let parsed = text.replace(/`([^`]+)`/g, '<code>$1</code>');
-    parsed = parsed.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-    parsed = parsed.replace(/\_([^_]+)\_/g, '<em>$1</em>');
-    parsed = parsed.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-    return parsed;
+const renderMarkdown = (text: string): React.ReactNode => {
+    if (!text) return null;
+    const lines = text.split('\n');
+
+    return lines.map((line, index) => (
+        <React.Fragment key={`md-line-${index}`}>
+            {renderMarkdownInline(line)}
+            {index < lines.length - 1 ? <br /> : null}
+        </React.Fragment>
+    ));
 };
 
 const parseOpcodeStackDiff = (text: string): [number, number] | null => {
@@ -2247,7 +2278,6 @@ function outActionElement(action: OutAction, i: number) {
         .replace(/"([^"]+?)":/g, '$1:') // Remove quotes from string values
         .replace(/: "([^"]+)"/g, ': $1'); // Remove quotes from values
 
-    // const text = customStringify(json);
     if (action.type === 'sendMsg') {
         const msgCell = beginCell()
             .store(storeMessageRelaxed(action.outMsg))

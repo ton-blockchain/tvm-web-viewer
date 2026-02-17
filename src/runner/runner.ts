@@ -527,10 +527,19 @@ export async function getEmulationWithStack(
     const theTx = loadTransaction(
         Cell.fromBase64(txRes.result.transaction).asSlice()
     );
-    const wasOldHashSame = theTx.stateUpdate.oldHash.equals(
-        theTx.stateUpdate.oldHash
+    const oldStateHashOk = theTx.stateUpdate.oldHash.equals(
+        txs[0].stateUpdate.oldHash
     );
-    console.log('VM had same hash:', wasOldHashSame);
+    if (!oldStateHashOk) {
+        console.warn(
+            'State update oldHash mismatch:',
+            txs[0].stateUpdate.oldHash.toString('hex'),
+            '!=',
+            theTx.stateUpdate.oldHash.toString('hex')
+        );
+    } else {
+        console.log('State update oldHash ok');
+    }
 
     const stateUpdateHashOk = theTx.stateUpdate.newHash.equals(
         txs[0].stateUpdate.newHash
