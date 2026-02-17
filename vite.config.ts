@@ -9,6 +9,10 @@ export default defineConfig({
         react(),
         vitePluginRequire({ fileRegex: /(.jsx?|.tsx?|.js?|.vue)$/ }),
     ],
+    define: {
+        'process.env': {},
+        global: 'globalThis',
+    },
     build: {
         // sourcemap: true,
         target: ['es2020'],
@@ -16,6 +20,9 @@ export default defineConfig({
     optimizeDeps: {
         esbuildOptions: {
             target: 'es2020',
+            define: {
+                global: 'globalThis',
+            },
         },
         include: ['@emotion/react'],
     },
