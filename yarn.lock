@@ -3589,7 +3589,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"devlop@npm:^1.0.0, devlop@npm:^1.1.0":
+"devlop@npm:^1.0.0":
   version: 1.1.0
   resolution: "devlop@npm:1.1.0"
   dependencies:
@@ -3697,13 +3697,6 @@ __metadata:
     graceful-fs: ^4.2.4
     tapable: ^2.3.0
   checksum: e7b30fa85a7831c79ad7b0aa15cde50e07eb9e770bc19266005821a596cf324f79d3b580223dccbd61e01a515cf4be09e1474745a4c47ad41d2d499b860314a5
-  languageName: node
-  linkType: hard
-
-"entities@npm:^6.0.0":
-  version: 6.0.1
-  resolution: "entities@npm:6.0.1"
-  checksum: 937b952e81aca641660a6a07f70001c6821973dea3ae7f6a5013eadce94620f3ed2e9c745832d503c8811ce6e97704d8a0396159580c0e567d815234de7fdecf
   languageName: node
   linkType: hard
 
@@ -4749,45 +4742,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"hast-util-from-html@npm:^2.0.3":
-  version: 2.0.3
-  resolution: "hast-util-from-html@npm:2.0.3"
-  dependencies:
-    "@types/hast": ^3.0.0
-    devlop: ^1.1.0
-    hast-util-from-parse5: ^8.0.0
-    parse5: ^7.0.0
-    vfile: ^6.0.0
-    vfile-message: ^4.0.0
-  checksum: 50f589f25a82868d611668421ff1d7997778743b34fbde77cd74d152350162b5045090c65ee3c3e2b4d51568f35426a0fc851ee1965723e1abf466f7f9d0bd83
-  languageName: node
-  linkType: hard
-
-"hast-util-from-parse5@npm:^8.0.0":
-  version: 8.0.3
-  resolution: "hast-util-from-parse5@npm:8.0.3"
-  dependencies:
-    "@types/hast": ^3.0.0
-    "@types/unist": ^3.0.0
-    devlop: ^1.0.0
-    hastscript: ^9.0.0
-    property-information: ^7.0.0
-    vfile: ^6.0.0
-    vfile-location: ^5.0.0
-    web-namespaces: ^2.0.0
-  checksum: 9ca68545a957a59f2bb18c834f1b7f72cdb1fc0d6b43233faa170e721c1f41da1bb0418b477b91332973c6bc2790a09bb07971fd8f0afe98b4cd111ea9fd7c8c
-  languageName: node
-  linkType: hard
-
-"hast-util-parse-selector@npm:^4.0.0":
-  version: 4.0.0
-  resolution: "hast-util-parse-selector@npm:4.0.0"
-  dependencies:
-    "@types/hast": ^3.0.0
-  checksum: 76087670d3b0b50b23a6cb70bca53a6176d6608307ccdbb3ed18b650b82e7c3513bfc40348f1389dc0c5ae872b9a768851f4335f44654abd7deafd6974c52402
-  languageName: node
-  linkType: hard
-
 "hast-util-to-html@npm:^9.0.5":
   version: 9.0.5
   resolution: "hast-util-to-html@npm:9.0.5"
@@ -4813,19 +4767,6 @@ __metadata:
   dependencies:
     "@types/hast": ^3.0.0
   checksum: 41d93ccce218ba935dc3c12acdf586193c35069489c8c8f50c2aa824c00dec94a3c78b03d1db40fa75381942a189161922e4b7bca700b3a2cc779634c351a1e4
-  languageName: node
-  linkType: hard
-
-"hastscript@npm:^9.0.0":
-  version: 9.0.1
-  resolution: "hastscript@npm:9.0.1"
-  dependencies:
-    "@types/hast": ^3.0.0
-    comma-separated-tokens: ^2.0.0
-    hast-util-parse-selector: ^4.0.0
-    property-information: ^7.0.0
-    space-separated-tokens: ^2.0.0
-  checksum: 2bbb9a3c2dc43c9dec7f6599ef45e5eefb1c2a5f75d33d005dc432e92bf9d7cfb6c0d927f15a7592bb48601d2b582ea2e4b1131a716ac3f7b618a07d88f9a5d7
   languageName: node
   linkType: hard
 
@@ -6468,15 +6409,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"parse5@npm:^7.0.0":
-  version: 7.3.0
-  resolution: "parse5@npm:7.3.0"
-  dependencies:
-    entities: ^6.0.0
-  checksum: ffd040c4695d93f0bc370e3d6d75c1b352178514af41be7afa212475ea5cead1d6e377cd9d4cec6a5e2bcf497ca50daf9e0088eadaa37dbc271f60def08fdfcd
-  languageName: node
-  linkType: hard
-
 "parseurl@npm:^1.3.3":
   version: 1.3.3
   resolution: "parseurl@npm:1.3.3"
@@ -7823,7 +7755,6 @@ __metadata:
     express: ^5.2.1
     framer-motion: ^11.14.4
     gh-pages: ^6.3.0
-    hast-util-from-html: ^2.0.3
     hast-util-to-html: ^9.0.5
     jest: ^30.2.0
     nodemon: ^3.1.11
@@ -8154,16 +8085,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vfile-location@npm:^5.0.0":
-  version: 5.0.3
-  resolution: "vfile-location@npm:5.0.3"
-  dependencies:
-    "@types/unist": ^3.0.0
-    vfile: ^6.0.0
-  checksum: bfb3821b6981b6e9aa369bed67a40090b800562064ea312e84437762562df3225a0ca922695389cc0ef1e115f19476c363f53e3ed44dec17c50678b7670b5f2b
-  languageName: node
-  linkType: hard
-
 "vfile-message@npm:^4.0.0":
   version: 4.0.3
   resolution: "vfile-message@npm:4.0.3"
@@ -8304,13 +8225,6 @@ __metadata:
     glob-to-regexp: ^0.4.1
     graceful-fs: ^4.1.2
   checksum: 44a6030e923fbbe2cbc51cd7fb7abdff58bc35ba68d6c3ca46e63b46f8b3502c7253e6ada384387e946df5515d3854227a84cec49eb88a315186f5c9a67a3e79
-  languageName: node
-  linkType: hard
-
-"web-namespaces@npm:^2.0.0":
-  version: 2.0.1
-  resolution: "web-namespaces@npm:2.0.1"
-  checksum: b6d9f02f1a43d0ef0848a812d89c83801d5bbad57d8bb61f02eb6d7eb794c3736f6cc2e1191664bb26136594c8218ac609f4069722c6f56d9fc2d808fa9271c6
   languageName: node
   linkType: hard
 

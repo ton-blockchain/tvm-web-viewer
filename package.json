@@ -11,6 +11,7 @@
         "dev": "vite",
         "build": "tsc -b && vite build",
         "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+        "test": "jest",
         "preview": "vite preview",
         "predeploy": "yarn build",
         "deploy": "gh-pages -d dist"
@@ -31,7 +32,6 @@
         "buffer": "^6.0.3",
         "express": "^5.2.1",
         "framer-motion": "^11.14.4",
-        "hast-util-from-html": "^2.0.3",
         "hast-util-to-html": "^9.0.5",
         "react": "^18.3.1",
         "react-dom": "^18.3.1",
