@@ -9,7 +9,6 @@ export default defineConfig({
         vitePluginRequire({ fileRegex: /(.jsx?|.tsx?|.js?|.vue)$/ }),
     ],
     define: {
-        'process.env': {},
         global: 'globalThis',
     },
     build: {
